@@ -2,7 +2,6 @@ package id.ak.myweather.ui.composable
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.inputmethodservice.InputMethodService
 import android.view.inputmethod.InputMethodManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -55,7 +54,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -163,7 +161,6 @@ fun MainScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
                 TextButton(onClick = { setShowLocationSheet(true) }) {
@@ -220,7 +217,6 @@ private fun LocationBottomSheet(
     val context = LocalContext.current
     val ime = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
     val view = LocalView.current
-    val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
 
     var query by remember { mutableStateOf("") }

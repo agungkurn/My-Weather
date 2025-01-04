@@ -2,9 +2,12 @@ package id.ak.myweather.ui.composable
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
@@ -44,40 +47,48 @@ fun CurrentWeatherAdvanced(
         buildString {
             append(formatter.format(number))
 
-            if (visibility>=1000) append(" km") else append(" m")
+            if (visibility >= 1000) append(" km") else append(" m")
         }
     }
     val formattedWindSpeed = remember(windSpeed) {
         formatter.format(windSpeed)
     }
 
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    LazyRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(16.dp)
+    ) {
+        item {
             WeatherInfoBox(
+                modifier = Modifier.width(100.dp),
                 dark = night,
                 title = "Pressure",
-                content = "$formattedPressure hPa",
-                modifier = Modifier.weight(1f)
-            )
-            WeatherInfoBox(
-                dark = night,
-                title = "Humidity",
-                content = "$humidity%",
-                modifier = Modifier.weight(1f)
+                content = "$formattedPressure hPa"
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        item {
             WeatherInfoBox(
+                modifier = Modifier.width(100.dp),
+                dark = night,
+                title = "Humidity",
+                content = "$humidity%"
+            )
+        }
+        item {
+            WeatherInfoBox(
+                modifier = Modifier.width(100.dp),
                 dark = night,
                 title = "Visibility",
                 content = formattedVisibility,
-                modifier = Modifier.weight(1f)
             )
+        }
+        item {
             WeatherInfoBox(
+                modifier = Modifier.width(100.dp),
                 dark = night,
                 title = "Wind",
                 content = "$formattedWindSpeed m/s",
-                modifier = Modifier.weight(1f),
                 icon = {
                     val tint = remember(night) {
                         if (night) Color.White else Color.Black
@@ -96,14 +107,15 @@ fun CurrentWeatherAdvanced(
             )
         }
         rain?.let {
-            val formattedRain = remember(it) { formatter.format(it) }
-
-            WeatherInfoBox(
-                dark = night,
-                title = "Rain",
-                content = "$formattedRain mm/h",
-                modifier = Modifier.fillMaxWidth()
-            )
+            item {
+                val formattedRain = remember(it) { formatter.format(it) }
+                WeatherInfoBox(
+                    modifier = Modifier.width(100.dp),
+                    dark = night,
+                    title = "Rain",
+                    content = "$formattedRain mm/h"
+                )
+            }
         }
     }
 }
