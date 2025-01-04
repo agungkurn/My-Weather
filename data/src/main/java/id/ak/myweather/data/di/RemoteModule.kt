@@ -8,6 +8,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import id.ak.myweather.data.BuildConfig
+import id.ak.myweather.data.api.GeocodeApi
 import id.ak.myweather.data.api.WeatherApi
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -40,8 +41,9 @@ class RemoteModule {
     }
 
     @Provides
+    @WeatherRetrofit
     @Singleton
-    fun provideRetrofit(client: OkHttpClient): Retrofit {
+    fun provideWeatherRetrofit(client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BuildConfig.BASE_URL)
             .client(client)
@@ -50,8 +52,25 @@ class RemoteModule {
     }
 
     @Provides
+    @GeocodingRetrofit
     @Singleton
-    fun provideWeatherApi(retrofit: Retrofit): WeatherApi {
+    fun provideGeocodingRetrofit(client: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BuildConfig.BASE_GEOCODING_URL)
+            .client(client)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWeatherApi(@WeatherRetrofit retrofit: Retrofit): WeatherApi {
         return retrofit.create(WeatherApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideGeocodingApi(@GeocodingRetrofit retrofit: Retrofit): GeocodeApi {
+        return retrofit.create(GeocodeApi::class.java)
     }
 }

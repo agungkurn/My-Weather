@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="search_placeholder">Search by city or state name</string>
+    <string name="use_current_location">Use current location</string>
+</resources>

@@ -22,6 +22,7 @@ android {
         buildConfigField("String", "API_KEY", "${getLocalProperty("API_KEY")}")
         buildConfigField("String", "BASE_URL", "${getLocalProperty("BASE_URL")}")
         buildConfigField("String", "BASE_IMAGE_URL", "${getLocalProperty("BASE_IMAGE_URL")}")
+        buildConfigField("String", "BASE_GEOCODING_URL", "${getLocalProperty("BASE_GEOCODING_URL")}")
     }
 }
 
@@ -31,6 +32,7 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
     implementation(libs.gson)
+    implementation(libs.androidx.datastore)
     debugImplementation(libs.chucker)
     releaseImplementation(libs.chucker.no.op)
 }

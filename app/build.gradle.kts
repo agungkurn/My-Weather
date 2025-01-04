@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "id.ak.myweather"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "id.ak.myweather"
         minSdk = 28
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 

@@ -17,8 +17,10 @@ data class CurrentWeatherEntity(
     val cloudiness: Int,
     val sunrise: Long,
     val sunset: Long,
-    val locationName: String,
     val windDegrees: Int,
     val windSpeed: Double,
-    val windGust: Double
+    val windGust: Double,
+    val locationName: String,
+    val latitude: Double,
+    val longitude: Double
 )

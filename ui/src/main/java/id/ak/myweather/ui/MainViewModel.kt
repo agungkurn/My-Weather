@@ -1,7 +1,5 @@
 package id.ak.myweather.ui
 
-import android.location.Location
-import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,65 +7,77 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import id.ak.myweather.domain.entity.CurrentWeatherEntity
+import id.ak.myweather.domain.entity.GeocodeEntity
+import id.ak.myweather.domain.use_case.GetCoordinatesByName
 import id.ak.myweather.domain.use_case.GetCurrentWeather
+import id.ak.myweather.domain.use_case.HasSavedLocation
 import id.ak.myweather.ui.state.UiState
 import id.ak.myweather.ui.theme.CornflowerBlue
 import id.ak.myweather.ui.utils.WeatherUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor(private val getCurrentWeather: GetCurrentWeather) :
-    ViewModel() {
+class MainViewModel @Inject constructor(
+    private val getCurrentWeatherUseCase: GetCurrentWeather,
+    private val getCoordinatesByNameUseCase: GetCoordinatesByName,
+    private val hasSavedLocationUseCase: HasSavedLocation
+) : ViewModel() {
     val uiState: StateFlow<UiState>
         field = MutableStateFlow<UiState>(UiState.NotLoading)
 
-    var location by mutableStateOf<Location?>(null)
+    val weather = getCurrentWeatherUseCase.cachedWeather
+    val hasSavedLocation = hasSavedLocationUseCase.value
+
+    var isLoadingSearch by mutableStateOf(false)
         private set
-    var weather by mutableStateOf<CurrentWeatherEntity?>(null)
+    var locations by mutableStateOf(listOf<GeocodeEntity>())
         private set
-    var backgroundColor by mutableStateOf(CornflowerBlue)
-        private set
-    var animationRes by mutableStateOf<Int?>(null)
-        private set
+
 
     fun onErrorShown() {
         uiState.value = UiState.NotLoading
     }
 
-    fun loadOnBackground(action: suspend CoroutineScope.() -> Unit) {
+    private fun loadOnBackground(
+        onLoading: (Boolean) -> Unit = {
+            uiState.value = if (it) UiState.Loading else UiState.NotLoading
+        },
+        onError: (Exception) -> Unit = {
+            uiState.value = UiState.Error(it.message ?: "Unknown Error")
+            it.printStackTrace()
+        },
+        action: suspend CoroutineScope.() -> Unit
+    ) {
         viewModelScope.launch {
-            uiState.value = UiState.Loading
-
+            onLoading(true)
             try {
                 action()
             } catch (e: Exception) {
-                uiState.value = UiState.Error(e.message ?: "Unknown Error")
-                e.printStackTrace()
+                onError(e)
             } finally {
-                uiState.value = UiState.NotLoading
+                onLoading(false)
             }
         }
     }
 
-    fun setCurrentLocation(location: Location) {
-        this.location = location
-        fetchCurrentWeather()
+    fun fetchCurrentWeather(latitude: Double, longitude: Double, isUserSelected: Boolean) {
+        loadOnBackground {
+            getCurrentWeatherUseCase(
+                latitude = latitude,
+                longitude = longitude,
+                saveLocation = isUserSelected
+            )
+        }
     }
 
-    fun fetchCurrentWeather() {
-        loadOnBackground {
-            location?.let {
-                weather = getCurrentWeather(latitude = it.latitude, longitude = it.longitude)
-            }
-            weather?.let {
-                animationRes = WeatherUtils.getAnimationRes(it.weatherName, it.sunrise, it.sunset)
-                backgroundColor =
-                    WeatherUtils.getBackgroundColor(it.weatherName, it.sunrise, it.sunset)
-            }
+    fun searchLocation(query: String) {
+        loadOnBackground(onLoading = { isLoadingSearch = it }) {
+            locations = getCoordinatesByNameUseCase(query)
         }
     }
 }

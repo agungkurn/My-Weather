@@ -167,7 +167,43 @@ class CurrentWeatherDtoToEntityMapper @Inject constructor() :
             windSpeed = wind?.speed ?: .0,
             windDegrees = wind?.deg ?: 0,
             windGust = wind?.gust ?: .0,
-            locationName = from.name.orEmpty()
+            locationName = from.name.orEmpty(),
+            latitude = from.coord?.lat ?: .0,
+            longitude = from.coord?.lon ?: .0
+        )
+    }
+}
+
+class CurrentWeatherEntityToDtoMapper @Inject constructor() :
+    Mapper<CurrentWeatherEntity, CurrentWeatherResponse>() {
+    override fun map(from: CurrentWeatherEntity): CurrentWeatherResponse {
+        return CurrentWeatherResponse(
+            weather = from.weatherDescription.split(", ").map { description ->
+                Weather(
+                    main = from.weatherName,
+                    icon = from.weatherIcon,
+                    description = description
+                )
+            },
+            main = Main(
+                temp = from.temperature.toDouble(),
+                tempMin = from.minTemperature.toDouble(),
+                tempMax = from.maxTemperature.toDouble(),
+                humidity = from.humidity,
+                pressure = from.pressure,
+                grndLevel = from.groundLevelPressure,
+                seaLevel = from.seaLevelPressure,
+                feelsLike = from.feelsLike.toDouble()
+            ),
+            rain = from.rainPrecipitation?.let {
+                Rain(precipitation = it)
+            },
+            visibility = from.visibility,
+            clouds = Clouds(all = from.cloudiness),
+            sys = Sys(sunrise = from.sunrise, sunset = from.sunset),
+            wind = Wind(deg = from.windDegrees, speed = from.windSpeed, gust = from.windGust),
+            name = from.locationName,
+            coord = Coord(lon = from.longitude, lat = from.latitude)
         )
     }
 }
