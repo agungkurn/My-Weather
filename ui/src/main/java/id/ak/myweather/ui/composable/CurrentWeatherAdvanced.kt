@@ -1,23 +1,36 @@
 package id.ak.myweather.ui.composable
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import id.ak.myweather.ui.R
+import id.ak.myweather.ui.theme.SunriseColor
 import java.text.NumberFormat
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun CurrentWeatherAdvanced(
@@ -63,7 +76,7 @@ fun CurrentWeatherAdvanced(
             WeatherInfoBox(
                 modifier = Modifier.width(100.dp),
                 dark = night,
-                title = "Pressure",
+                title = stringResource(R.string.pressure),
                 content = "$formattedPressure hPa"
             )
         }
@@ -71,7 +84,7 @@ fun CurrentWeatherAdvanced(
             WeatherInfoBox(
                 modifier = Modifier.width(100.dp),
                 dark = night,
-                title = "Humidity",
+                title = stringResource(R.string.humidity),
                 content = "$humidity%"
             )
         }
@@ -79,7 +92,7 @@ fun CurrentWeatherAdvanced(
             WeatherInfoBox(
                 modifier = Modifier.width(100.dp),
                 dark = night,
-                title = "Visibility",
+                title = stringResource(R.string.visibility),
                 content = formattedVisibility,
             )
         }
@@ -87,8 +100,8 @@ fun CurrentWeatherAdvanced(
             WeatherInfoBox(
                 modifier = Modifier.width(100.dp),
                 dark = night,
-                title = "Wind",
-                content = "$formattedWindSpeed m/s",
+                title = stringResource(R.string.wind),
+                content = stringResource(R.string.speed_m_s, formattedWindSpeed),
                 icon = {
                     val tint = remember(night) {
                         if (night) Color.White else Color.Black
@@ -112,10 +125,83 @@ fun CurrentWeatherAdvanced(
                 WeatherInfoBox(
                     modifier = Modifier.width(100.dp),
                     dark = night,
-                    title = "Rain",
+                    title = stringResource(R.string.rain),
                     content = "$formattedRain mm/h"
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun SunInfographic(
+    dark: Boolean,
+    sunrise: Long,
+    sunset: Long,
+    modifier: Modifier = Modifier
+) {
+    val formatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val cardColor = remember(dark) { (if (dark) Color.Black else Color.White).copy(alpha = .5f) }
+    val sunriseTime = remember(sunrise) {
+        val time = LocalTime.ofInstant(Instant.ofEpochSecond(sunrise), ZoneId.systemDefault())
+        time.format(formatter)
+    }
+    val sunsetTime = remember(sunset) {
+        val time = LocalTime.ofInstant(Instant.ofEpochSecond(sunset), ZoneId.systemDefault())
+        time.format(formatter)
+    }
+
+    Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = cardColor)) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, start = 8.dp, end = 8.dp)
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = "Sunrise",
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Start
+            )
+            Text(
+                modifier = Modifier.weight(1f),
+                text = "Sunset",
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.End
+            )
+        }
+        LinearProgressIndicator(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            progress = {
+                val now = System.currentTimeMillis() / 1000
+                when {
+                    now < sunrise -> 0f
+                    now in sunrise..sunset -> (sunset.toFloat() - now.toFloat()) / sunset.toFloat()
+                    else -> 100f
+                }
+            },
+            color = SunriseColor,
+            trackColor = Color.Gray
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp, start = 8.dp, end = 8.dp)
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = sunriseTime,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Start
+            )
+            Text(
+                modifier = Modifier.weight(1f),
+                text = sunsetTime,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.End
+            )
         }
     }
 }

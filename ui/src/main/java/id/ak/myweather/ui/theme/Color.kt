@@ -12,3 +12,4 @@ val Pink40 = Color(0xFF7D5260)
 
 val CornflowerBlue = Color(0xFF42A5F5)
 val KingsBlue = Color(0xFF2B3B6B)
+val SunriseColor = Color(0xFFFFA726)

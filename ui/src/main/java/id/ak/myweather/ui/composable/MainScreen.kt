@@ -187,9 +187,7 @@ fun MainScreen(
                         )
                     }
                     CurrentWeatherAdvanced(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         night = isSystemInDarkTheme(),
                         pressure = weather.pressure,
                         humidity = weather.humidity,
@@ -197,6 +195,12 @@ fun MainScreen(
                         windDegree = weather.windDegrees,
                         windSpeed = weather.windSpeed,
                         rain = weather.rainPrecipitation
+                    )
+                    SunInfographic(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        dark = isSystemInDarkTheme(),
+                        sunrise = weather.sunrise,
+                        sunset = weather.sunset
                     )
                 }
             }
