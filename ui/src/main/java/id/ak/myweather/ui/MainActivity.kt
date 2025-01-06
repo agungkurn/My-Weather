@@ -2,8 +2,8 @@ package id.ak.myweather.ui
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -12,33 +12,42 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.Priority
 import dagger.hilt.android.AndroidEntryPoint
 import id.ak.myweather.ui.composable.MainScreen
 import id.ak.myweather.ui.composable.UiStateHandler
 import id.ak.myweather.ui.theme.MyWeatherTheme
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val viewModel by viewModels<MainViewModel>()
+
     private val fusedLocationClient by lazy {
         LocationServices.getFusedLocationProviderClient(this)
     }
+    private val settingsClient by lazy {
+        LocationServices.getSettingsClient(this)
+    }
+
+    private val intentSenderForResult =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) {
+            if (it.resultCode == RESULT_OK) {
+                getCurrentLocation()
+            }
+        }
 
     @ExperimentalMaterial3Api
     @SuppressLint("MissingPermission")
@@ -47,8 +56,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MyWeatherTheme {
-                val coroutineScope = rememberCoroutineScope()
-                val viewModel = viewModel<MainViewModel>()
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
                 val (showLocationSheet, setShowLocationSheet) = remember { mutableStateOf(false) }
@@ -61,18 +68,7 @@ class MainActivity : ComponentActivity() {
                             it[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
                         if (fineLocationGranted || coarseLocationGranted) {
-                            coroutineScope.launch {
-                                try {
-                                    getCurrentLocation().also {
-                                        viewModel.fetchCurrentWeather(
-                                            latitude = it.latitude,
-                                            longitude = it.longitude,
-                                            isUserSelected = false
-                                        )
-                                    }
-                                } catch (_: Exception) {
-                                }
-                            }
+                            checkLocationSettings()
                         } else {
                             setShowLocationSheet(true)
                         }
@@ -101,20 +97,7 @@ class MainActivity : ComponentActivity() {
                         checkPermission(
                             permissions = permissions,
                             permissionLauncher = permissionLauncher,
-                            onHasBeenGranted = {
-                                coroutineScope.launch {
-                                    try {
-                                        getCurrentLocation().also {
-                                            viewModel.fetchCurrentWeather(
-                                                latitude = it.latitude,
-                                                longitude = it.longitude,
-                                                isUserSelected = false
-                                            )
-                                        }
-                                    } catch (_: Exception) {
-                                    }
-                                }
-                            },
+                            onHasBeenGranted = { checkLocationSettings() },
                             onHasBeenDenied = {
                                 permissionLauncher.launch(permissions.toTypedArray())
                             }
@@ -156,15 +139,44 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private suspend fun getCurrentLocation(): Location {
-        return suspendCancellableCoroutine<Location> {
-            fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                .addOnSuccessListener { location ->
-                    it.resume(location)
-                }.addOnFailureListener { e ->
-                    it.resumeWithException(e)
+    private fun checkLocationSettings() {
+        val locationRequest =
+            LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 1000)
+                .build()
+        val locationSettingsRequest = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+            .build()
+        settingsClient.checkLocationSettings(locationSettingsRequest)
+            .addOnSuccessListener { _ ->
+                getCurrentLocation()
+            }.addOnFailureListener { e ->
+                if (e is ResolvableApiException) {
+                    // Location settings are not satisfied, but this can be fixed
+                    // by showing the user a dialog.
+                    try {
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        val request = IntentSenderRequest.Builder(e.resolution).build()
+                        intentSenderForResult.launch(request)
+                    } catch (_: IntentSender.SendIntentException) {
+                        // Ignore the error.
+                    }
                 }
-        }
+            }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun getCurrentLocation() {
+        fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+            .addOnSuccessListener {
+                it?.let {
+                    viewModel.fetchCurrentWeather(
+                        latitude = it.latitude,
+                        longitude = it.longitude,
+                        isUserSelected = false
+                    )
+                }
+            }.addOnFailureListener {
+            }
     }
 }

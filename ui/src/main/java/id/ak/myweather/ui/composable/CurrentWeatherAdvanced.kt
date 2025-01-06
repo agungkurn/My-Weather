@@ -28,6 +28,10 @@ import id.ak.myweather.ui.R
 import id.ak.myweather.ui.theme.SunriseColor
 import id.ak.myweather.ui.utils.formatAsString
 import java.text.NumberFormat
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalTime
+import java.time.ZoneId
 
 @Composable
 fun CurrentWeatherAdvanced(
@@ -149,13 +153,13 @@ fun SunInfographic(
         ) {
             Text(
                 modifier = Modifier.weight(1f),
-                text = "Sunrise",
+                text = stringResource(R.string.sunrise),
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.Start
             )
             Text(
                 modifier = Modifier.weight(1f),
-                text = "Sunset",
+                text = stringResource(R.string.sunset),
                 style = MaterialTheme.typography.labelSmall,
                 textAlign = TextAlign.End
             )
@@ -164,16 +168,11 @@ fun SunInfographic(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
-            progress = {
-                val now = System.currentTimeMillis() / 1000
-                when {
-                    now < sunrise -> 0f
-                    now in sunrise..sunset -> (sunset.toFloat() - now.toFloat()) / sunset.toFloat()
-                    else -> 100f
-                }
-            },
+            progress = { getSunProgress(sunrise, sunset).toFloat() },
             color = SunriseColor,
-            trackColor = Color.Gray
+            trackColor = Color.Gray,
+            gapSize = (-2).dp,
+            drawStopIndicator = {}
         )
         Row(
             modifier = Modifier
@@ -193,5 +192,25 @@ fun SunInfographic(
                 textAlign = TextAlign.End
             )
         }
+    }
+}
+
+private fun getSunProgress(sunrise: Long, sunset: Long, isInMillisecond: Boolean = false): Double {
+    val currentTime = LocalTime.now()
+    val sunriseTime = LocalTime.ofInstant(
+        (if (isInMillisecond) Instant.ofEpochMilli(sunrise) else Instant.ofEpochSecond(sunrise)),
+        ZoneId.systemDefault()
+    )
+    val sunsetTime = LocalTime.ofInstant(
+        (if (isInMillisecond) Instant.ofEpochMilli(sunset) else Instant.ofEpochSecond(sunset)),
+        ZoneId.systemDefault()
+    )
+
+    val totalDuration = Duration.between(sunriseTime, sunsetTime).toMinutes().toDouble()
+    val elapsedDuration = Duration.between(sunriseTime, currentTime).toMinutes().toDouble()
+    return when {
+        currentTime.isBefore(sunriseTime) -> 0.0
+        currentTime.isAfter(sunsetTime) -> 1.0
+        else -> elapsedDuration / totalDuration
     }
 }

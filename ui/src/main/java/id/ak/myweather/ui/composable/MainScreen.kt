@@ -107,7 +107,7 @@ fun MainScreen(
                 longitude = it.longitude,
                 isUserSelected = hasSavedLocation == true
             )
-        } ?: if (hasSavedLocation == false) {
+        } ?: if (hasSavedLocation != true) {
             requestLocationPermission()
         } else {
         }
