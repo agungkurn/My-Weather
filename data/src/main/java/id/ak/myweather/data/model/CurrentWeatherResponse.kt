@@ -2,7 +2,12 @@ package id.ak.myweather.data.model
 
 import com.google.gson.annotations.SerializedName
 import id.ak.myweather.data.BuildConfig
-import id.ak.myweather.domain.entity.CurrentWeatherEntity
+import id.ak.myweather.data.model.shared.Clouds
+import id.ak.myweather.data.model.shared.Coordinates
+import id.ak.myweather.data.model.shared.Main
+import id.ak.myweather.data.model.shared.Weather
+import id.ak.myweather.data.model.shared.Wind
+import id.ak.myweather.domain.entity.WeatherEntity
 import id.ak.myweather.domain.mapper.Mapper
 import javax.inject.Inject
 import kotlin.math.roundToInt
@@ -27,86 +32,27 @@ data class CurrentWeatherResponse(
     val sys: Sys? = null,
 
     @field:SerializedName("dt")
-    val dt: Int? = null,
+    val timestamp: Long? = null,
 
     @field:SerializedName("coord")
-    val coord: Coord? = null,
+    val coordinates: Coordinates? = null,
 
     @field:SerializedName("weather")
-    val weather: List<Weather?>? = null,
+    val weather: List<Weather>? = null,
 
     @field:SerializedName("name")
     val name: String? = null,
 
-    @field:SerializedName("cod")
-    val cod: Int? = null,
-
     @field:SerializedName("id")
     val id: Int? = null,
-
-    @field:SerializedName("base")
-    val base: String? = null,
 
     @field:SerializedName("wind")
     val wind: Wind? = null
 )
 
-data class Weather(
-    @field:SerializedName("icon")
-    val icon: String? = null,
-
-    @field:SerializedName("description")
-    val description: String? = null,
-
-    @field:SerializedName("main")
-    val main: String? = null,
-
-    @field:SerializedName("id")
-    val id: Int? = null
-)
-
 data class Rain(
     @field:SerializedName("1h")
     val precipitation: Double? = null
-)
-
-data class Main(
-    @field:SerializedName("temp")
-    val temp: Double? = null,
-
-    @field:SerializedName("temp_min")
-    val tempMin: Double? = null,
-
-    @field:SerializedName("grnd_level")
-    val grndLevel: Int? = null,
-
-    @field:SerializedName("humidity")
-    val humidity: Int? = null,
-
-    @field:SerializedName("pressure")
-    val pressure: Int? = null,
-
-    @field:SerializedName("sea_level")
-    val seaLevel: Int? = null,
-
-    @field:SerializedName("feels_like")
-    val feelsLike: Double? = null,
-
-    @field:SerializedName("temp_max")
-    val tempMax: Double? = null
-)
-
-data class Coord(
-    @field:SerializedName("lon")
-    val lon: Double? = null,
-
-    @field:SerializedName("lat")
-    val lat: Double? = null
-)
-
-data class Clouds(
-    @field:SerializedName("all")
-    val all: Int? = null
 )
 
 data class Sys(
@@ -126,30 +72,19 @@ data class Sys(
     val type: Int? = null
 )
 
-data class Wind(
-    @field:SerializedName("deg")
-    val deg: Int? = null,
-
-    @field:SerializedName("speed")
-    val speed: Double? = null,
-
-    @field:SerializedName("gust")
-    val gust: Double? = null
-)
-
 class CurrentWeatherDtoToEntityMapper @Inject constructor() :
-    Mapper<CurrentWeatherResponse, CurrentWeatherEntity>() {
-    override fun map(from: CurrentWeatherResponse): CurrentWeatherEntity {
+    Mapper<CurrentWeatherResponse, WeatherEntity>() {
+    override fun map(from: CurrentWeatherResponse): WeatherEntity {
         val weather = from.weather
         val main = from.main
         val wind = from.wind
 
-        return CurrentWeatherEntity(
+        return WeatherEntity(
             weatherName = weather?.firstOrNull()?.main.orEmpty(),
             weatherIcon = weather?.firstOrNull()?.icon?.let {
                 "${BuildConfig.BASE_IMAGE_URL}${it}@2x.png"
             }.orEmpty(),
-            weatherDescription = weather?.map { it?.description.orEmpty() }?.joinToString()
+            weatherDescription = weather?.map { it.description.orEmpty() }?.joinToString()
                 .orEmpty(),
             temperature = main?.temp?.roundToInt() ?: 0,
             minTemperature = main?.tempMin?.roundToInt() ?: 0,
@@ -168,15 +103,16 @@ class CurrentWeatherDtoToEntityMapper @Inject constructor() :
             windDegrees = wind?.deg ?: 0,
             windGust = wind?.gust ?: .0,
             locationName = from.name.orEmpty(),
-            latitude = from.coord?.lat ?: .0,
-            longitude = from.coord?.lon ?: .0
+            latitude = from.coordinates?.lat ?: .0,
+            longitude = from.coordinates?.lon ?: .0,
+            timestamp = from.timestamp ?: (System.currentTimeMillis() / 1000L)
         )
     }
 }
 
 class CurrentWeatherEntityToDtoMapper @Inject constructor() :
-    Mapper<CurrentWeatherEntity, CurrentWeatherResponse>() {
-    override fun map(from: CurrentWeatherEntity): CurrentWeatherResponse {
+    Mapper<WeatherEntity, CurrentWeatherResponse>() {
+    override fun map(from: WeatherEntity): CurrentWeatherResponse {
         return CurrentWeatherResponse(
             weather = from.weatherDescription.split(", ").map { description ->
                 Weather(
@@ -203,7 +139,8 @@ class CurrentWeatherEntityToDtoMapper @Inject constructor() :
             sys = Sys(sunrise = from.sunrise, sunset = from.sunset),
             wind = Wind(deg = from.windDegrees, speed = from.windSpeed, gust = from.windGust),
             name = from.locationName,
-            coord = Coord(lon = from.longitude, lat = from.latitude)
+            coordinates = Coordinates(lon = from.longitude, lat = from.latitude),
+            timestamp = from.timestamp
         )
     }
 }

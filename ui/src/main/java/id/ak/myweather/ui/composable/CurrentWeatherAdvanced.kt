@@ -26,11 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import id.ak.myweather.ui.R
 import id.ak.myweather.ui.theme.SunriseColor
+import id.ak.myweather.ui.utils.formatAsString
 import java.text.NumberFormat
-import java.time.Instant
-import java.time.LocalTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun CurrentWeatherAdvanced(
@@ -140,16 +137,9 @@ fun SunInfographic(
     sunset: Long,
     modifier: Modifier = Modifier
 ) {
-    val formatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
     val cardColor = remember(dark) { (if (dark) Color.Black else Color.White).copy(alpha = .5f) }
-    val sunriseTime = remember(sunrise) {
-        val time = LocalTime.ofInstant(Instant.ofEpochSecond(sunrise), ZoneId.systemDefault())
-        time.format(formatter)
-    }
-    val sunsetTime = remember(sunset) {
-        val time = LocalTime.ofInstant(Instant.ofEpochSecond(sunset), ZoneId.systemDefault())
-        time.format(formatter)
-    }
+    val sunriseTime = remember(sunrise) { sunrise.formatAsString(pattern = "HH:mm") }
+    val sunsetTime = remember(sunset) { sunset.formatAsString(pattern = "HH:mm") }
 
     Card(modifier = modifier, colors = CardDefaults.cardColors(containerColor = cardColor)) {
         Row(

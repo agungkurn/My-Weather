@@ -1,6 +1,6 @@
 package id.ak.myweather.domain.entity
 
-data class CurrentWeatherEntity(
+data class WeatherEntity(
     val weatherName: String,
     val weatherIcon: String,
     val weatherDescription: String,
@@ -22,5 +22,6 @@ data class CurrentWeatherEntity(
     val windGust: Double,
     val locationName: String,
     val latitude: Double,
-    val longitude: Double
+    val longitude: Double,
+    val timestamp: Long
 )

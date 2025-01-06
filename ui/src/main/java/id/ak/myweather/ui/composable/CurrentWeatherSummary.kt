@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
@@ -20,6 +21,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.LottieRetrySignal
 import com.airbnb.lottie.compose.rememberLottieComposition
+import id.ak.myweather.ui.R
 
 @Composable
 fun CurrentWeatherSummary(
@@ -61,7 +63,7 @@ fun CurrentWeatherSummary(
                     style = MaterialTheme.typography.displayLarge
                 )
                 Text(
-                    text = "°C",
+                    text = stringResource(R.string.celcius),
                     style = MaterialTheme.typography.titleLarge
                 )
             }

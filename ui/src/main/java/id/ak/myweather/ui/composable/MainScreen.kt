@@ -202,6 +202,10 @@ fun MainScreen(
                         sunrise = weather.sunrise,
                         sunset = weather.sunset
                     )
+                    WeatherForecast(
+                        modifier = Modifier.padding(vertical = 16.dp),
+                        items = viewModel.weatherForecast
+                    )
                 }
             }
         }

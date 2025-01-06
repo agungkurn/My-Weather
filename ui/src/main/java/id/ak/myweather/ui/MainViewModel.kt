@@ -6,26 +6,26 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import id.ak.myweather.domain.entity.CurrentWeatherEntity
 import id.ak.myweather.domain.entity.GeocodeEntity
+import id.ak.myweather.domain.entity.WeatherEntity
 import id.ak.myweather.domain.use_case.GetCoordinatesByName
 import id.ak.myweather.domain.use_case.GetCurrentWeather
+import id.ak.myweather.domain.use_case.GetWeatherForecast
 import id.ak.myweather.domain.use_case.HasSavedLocation
 import id.ak.myweather.ui.state.UiState
-import id.ak.myweather.ui.theme.CornflowerBlue
-import id.ak.myweather.ui.utils.WeatherUtils
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
+    hasSavedLocationUseCase: HasSavedLocation,
     private val getCurrentWeatherUseCase: GetCurrentWeather,
     private val getCoordinatesByNameUseCase: GetCoordinatesByName,
-    private val hasSavedLocationUseCase: HasSavedLocation
+    private val getWeatherForecastUseCase: GetWeatherForecast
 ) : ViewModel() {
     val uiState: StateFlow<UiState>
         field = MutableStateFlow<UiState>(UiState.NotLoading)
@@ -37,7 +37,8 @@ class MainViewModel @Inject constructor(
         private set
     var locations by mutableStateOf(listOf<GeocodeEntity>())
         private set
-
+    var weatherForecast by mutableStateOf(listOf<WeatherEntity>())
+        private set
 
     fun onErrorShown() {
         uiState.value = UiState.NotLoading
@@ -67,11 +68,17 @@ class MainViewModel @Inject constructor(
 
     fun fetchCurrentWeather(latitude: Double, longitude: Double, isUserSelected: Boolean) {
         loadOnBackground {
-            getCurrentWeatherUseCase(
-                latitude = latitude,
-                longitude = longitude,
-                saveLocation = isUserSelected
-            )
+            launch {
+                getCurrentWeatherUseCase(
+                    latitude = latitude,
+                    longitude = longitude,
+                    saveLocation = isUserSelected
+                )
+            }
+            val forecastJob = async {
+                getWeatherForecastUseCase(latitude = latitude, longitude = longitude)
+            }
+            weatherForecast = forecastJob.await()
         }
     }
 

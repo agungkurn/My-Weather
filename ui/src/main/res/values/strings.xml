@@ -8,4 +8,7 @@
     <string name="wind">Wind</string>
     <string name="speed_m_s">%1$s m/s</string>
     <string name="rain">Rain</string>
+    <string name="celcius">°C</string>
+    <string name="forecast_today">Weather Forecast for Today</string>
+    <string name="forecast_5_days">Weather Forecast for the Next 5 Days</string>
 </resources>
